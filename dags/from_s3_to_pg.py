@@ -31,24 +31,25 @@ args = {
     "retry_delay": timedelta(minutes=20)
 }
 
-def get_dates(**args) -> tuple[str, str]:
-    start_date = args["data_interval_start"]
-    end_date = args["data_interval_end"]
-    return start_date, end_date
+def get_dates(**kwargs) -> tuple[str, str]:
+    """
+    Получаем start_date и end_date в формате строки
+    """
+    start_date = kwargs["data_interval_start"] - timedelta(days=2)
+    end_date = kwargs["data_interval_end"] - timedelta(days=2)
+    
+    return start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d")
 
 def from_s3_to_pg(**args):
+    """
+    Загрузка данных из S3 в PostgreSQL
+    """
     start_date, end_date = get_dates(**args)
-
-    start_date = start_date.strftime('%Y-%m-%d')
-    end_date = end_date.strftime('%Y-%m-%d')
-
-    start_date = datetime.strptime(start_date, "%Y-%m-%d") - timedelta(days=2)
-    end_date = datetime.strptime(end_date, "%Y-%m-%d") - timedelta(days=2)
 
     logging.info(f"Connecting to DuckDB and PostgreSQL for {start_date} to {end_date}")
 
     try:
-        # Подключение к DuckDB
+        
         con = duckdb.connect()
 
         con.sql(f"""
@@ -62,7 +63,7 @@ def from_s3_to_pg(**args):
             SET s3_use_ssl = FALSE;
         """)
 
-        # Вставка данных в PostgreSQL
+        
         con.sql(f"""
             CREATE SECRET dwh_postgres (
                 TYPE postgres,
@@ -95,12 +96,12 @@ def from_s3_to_pg(**args):
                 url,
                 publishedAt as published_at,
                 content
-            FROM 's3://{MINIO_BUCKET}/{LAYER}/{SOURCE}/{start_date.strftime('%Y-%m-%d')}/{end_date.strftime('%Y-%m-%d')}_news_data.parquet';
+            FROM 's3://{MINIO_BUCKET}/{LAYER}/{SOURCE}/{start_date}/{end_date}_news_data.parquet';
         """)
 
-        logging.info("Data successfully loaded into PostgreSQL")
+        logging.info("Данные успешно загружены в PostgreSQL")
     except Exception as e:
-        logging.error(f"Error during DuckDB or PostgreSQL operation: {e}")
+        logging.error(f"Ошибка с DuckDB или PostgreSQL: {e}")
         raise
     finally:
         con.close()
@@ -120,12 +121,12 @@ with DAG(
 
     sensor_ods = ExternalTaskSensor(
         task_id="sensor_ods",
-        external_dag_id="get_data_and_load_to_s3",  # Ensure this is correct
-        external_task_id="from_api_to_s3",  # Ensure this is the correct task_id
+        external_dag_id="get_data_and_load_to_s3", 
+        external_task_id="from_api_to_s3",  
         allowed_states=["success"],
-        mode="poke",  # or "reschedule"
-        timeout=3600,  # Timeout of 1 hour
-        poke_interval=60,  # Check every minute
+        mode="poke", 
+        timeout=3600, 
+        poke_interval=60,  
     )
 
     from_s3_to_pg = PythonOperator(

@@ -106,7 +106,7 @@ with DAG(
     )
 
     from_api_to_s3_task = PythonOperator(
-        task_id="from_api_to_s3",
+        task_id="from_api_to_s3_task",
         python_callable=from_api_to_s3,
     )
 

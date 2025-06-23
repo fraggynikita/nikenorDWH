@@ -28,7 +28,7 @@ args = {
 
 with DAG(
     dag_id=DAG_ID,
-    schedule_interval="0 5 * * *",
+    schedule_interval="0 9 * * *",
     default_args=args,
     concurrency=1,
     max_active_tasks=1,
@@ -42,7 +42,7 @@ with DAG(
     sensor_on_smth = ExternalTaskSensor(
         task_id="sensor_on_smth",
         external_dag_id="from_s3_to_pg",
-        external_task_id="from_s3_to_pg",
+        external_task_id="from_s3_to_pg_task",
         allowed_states=["success"],
         mode="poke", 
         timeout=3600, 

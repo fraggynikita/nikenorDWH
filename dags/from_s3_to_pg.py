@@ -122,7 +122,7 @@ with DAG(
     sensor_ods = ExternalTaskSensor(
         task_id="sensor_ods",
         external_dag_id="get_data_and_load_to_s3", 
-        external_task_id="from_api_to_s3",  
+        external_task_id="from_api_to_s3_task",  
         allowed_states=["success"],
         mode="poke", 
         timeout=3600, 
@@ -130,7 +130,7 @@ with DAG(
     )
 
     from_s3_to_pg = PythonOperator(
-        task_id="from_s3_to_pg",
+        task_id="from_s3_to_pg_task",
         python_callable=from_s3_to_pg,
     )
 

@@ -86,6 +86,7 @@ x-airflow-common:
       condition: service_healthy
 
 services:
+
   postgres_dwh:
     image: postgres:13
     environment:
@@ -95,6 +96,7 @@ services:
     restart: always
     ports:
       - "5432:5432"
+
   minio:
     image: minio/minio:RELEASE.2025-02-18T16-25-55Z
     restart: always
@@ -115,6 +117,34 @@ services:
     container_name: metabase
     ports:
       - "3000:3000"
+
+  clickhouse:
+    image: yandex/clickhouse-server:latest
+    environment:
+      - CLICKHOUSE_DB=clickhouse
+      - CLICKHOUSE_USER=clickhouse
+      - CLICKHOUSE_PASSWORD=clickhouse
+    ports:
+      - "9005:9005"
+      - "8123:8123"
+      - "9009:9009"
+    restart: always
+
+  jupyter:
+    build:
+      context: ./jupyter_notebook_dockerfile/
+      dockerfile: Dockerfile
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - AWS_ACCESS_KEY_ID=gD9BvfOvSCRR6W8YxPmy
+      - AWS_SECRET_ACCESS_KEY=glGcl9BadtfaYYijHudMXYcH1uABBAMNFCdik0xk
+      - AWS_DEFAULT_REGION=us-east-1  
+      - AWS_ENDPOINT_URL=minio:9000
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./notebooks:/home/jovyan/work
+    restart: always
 
   postgres:
     image: postgres:13

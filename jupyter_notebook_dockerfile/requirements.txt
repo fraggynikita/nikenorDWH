@@ -2,3 +2,4 @@ boto3
 pandas
 s3fs
 pyarrow
+pyspark
